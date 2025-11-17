@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QuestForCamembert")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0f3bd6f1b3d030671723960f06ac24b1d31c8704")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b2e7e1e9e75053f24a68cd631240918754fa1f3")]
 [assembly: System.Reflection.AssemblyProductAttribute("QuestForCamembert")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QuestForCamembert")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

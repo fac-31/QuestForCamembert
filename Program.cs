@@ -47,6 +47,7 @@ public static class Program
         new("button", "Lucky Button", "Lucky Button (mystic charm)"),
         new("marble", "Marble", "Marble (rolling getaway)")
     };
+    private static readonly IReadOnlyList<Scene> AdventureScenes = SceneLibrary.Scenes;
 
     public static void Main(string[] args)
     {
@@ -267,21 +268,12 @@ Press ENTER to scurry inside...
 
     private static void PlayScenes(CharacterProfile character)
     {
-        var scenes = new[]
-        {
-            BuildCatVsHooverScene(),
-            BuildWorksurfaceScene(),
-            BuildCurtainClimbScene(),
-            BuildPantrySentriesScene(),
-            BuildToySoldiersScene()
-        };
-
-        foreach (var scene in scenes)
+        foreach (var scene in AdventureScenes)
         {
             PlayScene(scene, character);
         }
     }
-
+    
     private static Scene BuildCatVsHooverScene() => new(
         "CAT vs HOOVER",
         """
