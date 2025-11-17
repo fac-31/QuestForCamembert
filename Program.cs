@@ -31,46 +31,11 @@ public class Stats
     }
 }
 
-// Abstract base class for characters
-public abstract class Character
-{
-    public string Name {get; set;}
-    public Stats CharacterStats { get; private set; } = new Stats();
-    public Character(string name)
-    {
-        this.Name = name;
-    }
-}
-// First Character subclass
-public class DangerMouse : Character
-{
-    public DangerMouse(string name) : base(name)
-    {
-        this.CharacterStats.Strength += 5;
-    }
-}
-
-public class SherlockMouse : Character
-{
-    public SherlockMouse(string name) : base(name)
-    {
-        this.CharacterStats.Intelligence += 5;
-    }
-}
-
-public class Tom : Character
-{
-    public Tom(string name) : base(name)
-    {
-        this.CharacterStats.Charisma += 20;
-    }
-}
-
 public static class Program
 {
     private const int TypeDelayMilliseconds = 25;
     private const int InventorySelectionCount = 2;
-    private const int FailureDamage = 15;
+    private const int FailureDamage = 25;
     private static readonly InventoryItem[] InventoryOptions =
     {
         new("sword", "Toothpick Sword", "Toothpick Sword (stabby)"),
@@ -138,6 +103,49 @@ Press ENTER to scurry inside...
 
         var name = ReadNonEmptyLine();
 
+        // Quiz to determine stats
+        var stats = new Stats();
+
+        Console.WriteLine();
+        Console.WriteLine($"Well howdy do, {name}! Answer a few questions to shape your stats:");
+
+        // Question 1: Strength
+        Console.WriteLine("Q1: You find a heavy piece of cheese stuck under a crate. Do you:");
+        Console.WriteLine("1) Try to lift it yourself");
+        Console.WriteLine("2) Look for a lever or tool to help");
+        Console.WriteLine("3) Leave it alone");
+        Console.Write("> ");
+        var choice = Console.ReadLine();
+        if (choice == "1") stats.Strength += 5;
+        else if (choice == "2") stats.Intelligence += 5;
+        else stats.Agility += 2;
+
+        // Question 2: Agility
+        Console.WriteLine("\nQ2: A cat is chasing you! Do you:");
+        Console.WriteLine("1) Run as fast as you can");
+        Console.WriteLine("2) Hide behind something");
+        Console.WriteLine("3) Try to outsmart it");
+        Console.Write("> ");
+        choice = Console.ReadLine();
+        if (choice == "1") stats.Agility += 5;
+        else if (choice == "2") stats.Charisma += 2; // maybe calm other mice?
+        else stats.Intelligence += 3;
+
+        // Question 3: Charisma
+        Console.WriteLine("\nQ3: You meet another mouse. Do you:");
+        Console.WriteLine("1) Share your cheese");
+        Console.WriteLine("2) Ignore them");
+        Console.WriteLine("3) Try to trick them");
+        Console.Write("> ");
+        choice = Console.ReadLine();
+        if (choice == "1") stats.Charisma += 5;
+        else if (choice == "2") stats.Strength += 2;
+        else stats.Intelligence += 2;
+
+        Console.WriteLine();
+        Console.WriteLine($"Your starting stats are: Health={stats.Health}, Strength={stats.Strength}, Agility={stats.Agility}, Intelligence={stats.Intelligence}, Charisma={stats.Charisma}");
+
+        // Inventory selection
         Console.WriteLine();
         Console.WriteLine($"Choose {InventorySelectionCount} items to carry in your tiny backpack:");
         for (var i = 0; i < InventoryOptions.Length; i++)
@@ -147,10 +155,17 @@ Press ENTER to scurry inside...
 
         Console.WriteLine();
         Console.WriteLine($"Enter {InventorySelectionCount} numbers separated by a space:");
-
         var inventory = ReadInventorySelection();
 
-        return new CharacterProfile(name, inventory);
+        // Create character with quiz-modified stats
+        var character = new CharacterProfile(name, inventory);
+        character.Stats.Health = stats.Health;
+        character.Stats.Strength = stats.Strength;
+        character.Stats.Agility = stats.Agility;
+        character.Stats.Intelligence = stats.Intelligence;
+        character.Stats.Charisma = stats.Charisma;
+
+        return character;
     }
 
     private static string ReadNonEmptyLine()
@@ -235,7 +250,20 @@ Press ENTER to scurry inside...
     }
 
     private sealed record InventoryItem(string Key, string ShortName, string Description);
-    private sealed record ItemOutcome(string Description, bool CausesDamage = false, int DamageAmount = 0);
+    private sealed record ItemOutcome(
+        string Description, 
+        bool CausesDamage = false, 
+        int DamageAmount = 0,
+        Func<CharacterProfile, InventoryItem, ItemOutcome>? DynamicOutcome = null
+    )
+    {
+        public ItemOutcome Resolve(CharacterProfile character, InventoryItem item)
+        {
+            if (DynamicOutcome != null)
+                return DynamicOutcome(character, item);
+            return this;
+        }
+    };
 
     private static void PlayScenes(CharacterProfile character)
     {
@@ -254,272 +282,348 @@ Press ENTER to scurry inside...
         }
     }
 
-    private static Scene BuildCatVsHooverScene() =>
-        new(
-            "CAT vs HOOVER",
+    private static Scene BuildCatVsHooverScene() => new(
+        "CAT vs HOOVER",
+        """
+        You enter the living room. To the LEFT: you hear the slow, hungry purr of the household cat…
+        To the RIGHT: the hoover sits dormant, but the switch is twitching like it might turn on.
+        """,
+        "LEFT (Cat)",
+        new ScenePath(
             """
-You enter the living room.
-To the LEFT: you hear the slow, hungry purr of the household cat…
-To the RIGHT: the hoover sits dormant, but the switch is twitching like it might turn on.
-""",
-            "LEFT (Cat)",
-            new ScenePath(
-                """
-The CAT prowls toward you, eyes locked on your tail.
-You must act fast!
-""",
-                "Choose an item to use:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
-You fire a tiny breadcrumb from your slingshot!
-The cat flinches and gives you a window to escape.
-You scurry to safety!
-"""),
-                    ["shield"] = new ItemOutcome("""
-You hold the bottlecap shield between you and the cat's claws.
-It clangs off the shield and loses interest.
-You dart away while it licks its paw.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You brandish {item.ShortName}, but the cat swats it back into your whiskers. Ouch!",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Hoover)",
-            new ScenePath(
-                """
-As you approach, the Hoover suddenly ROARS to life!
-Dust and hair swirl everywhere.
-""",
-                "Choose an item to use:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
-You launch a pebble at the power switch.
-The hoover sputters off and you zip past the hose.
-"""),
-                    ["shield"] = new ItemOutcome("""
-You crouch behind your bottlecap as debris flies.
-You survive the storm and crawl onward.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You wave {item.ShortName}, but the hoover gust blasts it into you.",
-                    true,
-                    FailureDamage)));
+            The CAT prowls toward you, eyes locked on your tail. You must act fast!
+            """,
+            "Choose an item to use:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    "You fire a tiny breadcrumb from your slingshot!",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You fire with perfect aim! The cat jumps aside and you escape unscathed.");
+                        return new ItemOutcome("The cat flinches slightly, but you stumble and barely escape.", true, FailureDamage);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    "You hold the bottlecap shield between you and the cat's claws.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Strength >= 15)
+                            return new ItemOutcome("You brace the shield firmly. The cat loses interest and walks away.");
+                        return new ItemOutcome("The cat knocks the shield aside and swipes at you!", true, FailureDamage);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    "You roll the marble towards the cat...",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Charisma >= 15)
+                            return new ItemOutcome("The cat is distracted by your charming antics while the marble rolls away. You escape safely!");
+                        return new ItemOutcome("The cat bats at the marble. You barely scurry away.", true, FailureDamage);
+                    }
+                )
+            }
+        ),
+        "RIGHT (Hoover)",
+        new ScenePath(
+            """
+            As you approach, the Hoover suddenly ROARS to life! Dust and hair swirl everywhere.
+            """,
+            "Choose an item to use:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    "You launch a pebble at the power switch.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("Your aim is precise! The hoover sputters off and you zip past the hose safely.");
+                        return new ItemOutcome("The pebble bounces harmlessly. You dodge debris as best you can.", true, FailureDamage);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    "You crouch behind your bottlecap as debris flies.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You move swiftly, using the shield to survive the gust unscathed.");
+                        return new ItemOutcome("The wind blows the shield into you! Ouch.", true, FailureDamage);
+                    }
+                )
+            }
+        )
+    );
 
-    private static Scene BuildWorksurfaceScene() =>
-        new(
-            "THE WORKSURFACE",
-            """
-You climb onto the kitchen counter.
-LEFT: A row of shiny KNIVES. The handles look slippery.
-RIGHT: A BLENDER sits open… and someone’s hand just reached for the power button.
-""",
-            "LEFT (Knives)",
-            new ScenePath(
-                """
-You slip onto the cutting board. One wrong move and—
-A knife starts tipping toward you!
-""",
-                "Choose an item:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
-You snap a rubber band at the falling knife.
-It nudges the blade aside just enough for you to scurry past the handle.
-"""),
-                    ["shield"] = new ItemOutcome("""
-You brace the bottlecap above you.
-The knife clangs on the metal and sticks in the board while you dive to safety.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You raise {item.ShortName}, but the knife hammers it back into your paws.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Blender)",
-            new ScenePath(
-                """
-The blender whirs to life!
-The air vortex is pulling you toward it.
-""",
-                "Use an item to escape:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
-You aim at the power button and let fly.
-The button pops back out and the blades grind to a halt.
-"""),
-                    ["shield"] = new ItemOutcome("""
-You grip the countertop with one paw and anchor the shield behind a knob.
-The suction tugs at you, but you hold on until the blender powers down.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You cling to {item.ShortName}, but the blender's wind pelts it back at you.",
-                    true,
-                    FailureDamage)));
+    private static Scene BuildWorksurfaceScene() => new(
+        "THE WORKSURFACE",
+        """
+        You climb onto the kitchen counter. LEFT: A row of shiny KNIVES.
+        RIGHT: A BLENDER sits open… and someone’s hand just reached for the power button.
+        """,
+        "LEFT (Knives)",
+        new ScenePath(
+            "You slip onto the cutting board. One wrong move and— A knife starts tipping toward you!",
+            "Choose an item:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    Description: "Snap a rubber band to manipulate the knife.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You cleverly snap a rubber band to nudge the knife aside safely.");
+                        return new ItemOutcome("The knife tips closer! You barely dodge.", true, FailureDamage);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    Description: "Use the shield to block the knife.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Strength >= 15)
+                            return new ItemOutcome("You brace the shield firmly; the knife clangs off safely.");
+                        return new ItemOutcome("The knife clangs off the shield but grazes your paw!", true, FailureDamage);
+                    }
+                )
+            }
+        ),
+        "RIGHT (Blender)",
+        new ScenePath(
+            "The blender whirs to life! The air vortex is pulling you toward it.",
+            "Use an item to escape:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    Description: "Shoot a pebble at the blender button.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You hit the button perfectly; the blender stops, and you escape.");
+                        return new ItemOutcome("The pebble misses the button! You dodge debris frantically.", true, FailureDamage);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    Description: "Block the wind with the shield.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You maneuver behind the shield, holding steady as the blender sucks harmlessly past.");
+                        return new ItemOutcome("The wind throws the shield into you!", true, FailureDamage);
+                    }
+                )
+            }
+        )
+    );
 
-    private static Scene BuildCurtainClimbScene() =>
-        new(
-            "CURTAIN CLIMB",
-            """
-You slip into the dining room where enormous velvet curtains sway.
-LEFT: Climb the tasseled cord toward the curtain rod lookout.
-RIGHT: Dash along the window ledge and leap to the chandelier.
-""",
-            "LEFT (Curtain Cord)",
-            new ScenePath(
-                """
-The cord is slick with polish and twice as thick as you are.
-If you fall, it's a long drop to the marble floor.
-""",
-                "Choose something to steady your climb:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["thread"] = new ItemOutcome("""
-You loop your spool thread around the cord like a harness.
-Step by step you rappel upward until you reach the rod.
-"""),
-                    ["marble"] = new ItemOutcome("""
-You wedge the marble beneath you as a foothold, rolling it up with each tug.
-The improvised step keeps you glued to the cord, and you reach the top.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You cling to {item.ShortName}, but it slips and smacks you as you tumble a few inches.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Chandelier Leap)",
-            new ScenePath(
-                """
-Wind rushes in from an open window, swinging the chandelier wildly.
-Miss the timing and you'll be tossed into the sideboard.
-""",
-                "Choose something to control the swing:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["thread"] = new ItemOutcome("""
-You sling the thread like a lasso, snagging a chandelier arm.
-With a quick yank you stabilize the swing and land neatly on the fixture.
-"""),
-                    ["marble"] = new ItemOutcome("""
-You roll the marble down the ledge, letting it drop onto the chandelier chain.
-The added weight evens out the sway, giving you a perfect landing.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You toss {item.ShortName}, but the chandelier bats it back at your nose.",
-                    true,
-                    FailureDamage)));
+    private static Scene BuildCurtainClimbScene() => new(
+        "CURTAIN CLIMB",
+        """
+        You slip into the dining room where enormous velvet curtains sway.
+        LEFT: Climb the tasseled cord toward the curtain rod lookout.
+        RIGHT: Dash along the window ledge and leap to the chandelier.
+        """,
+        "LEFT (Curtain Cord)",
+        new ScenePath(
+            "The cord is slick with polish and twice as thick as you are. If you fall, it's a long drop to the marble floor.",
+            "Choose something to steady your climb:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["thread"] = new ItemOutcome(
+                    Description: "Tie a thread for a secure grip.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You fashion a secure harness with the thread and climb safely.");
+                        return new ItemOutcome("The thread slips a little! You hang on tightly and reach the top.", true, FailureDamage / 2);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    Description: "Hold the marble as a counterweight.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Charisma >= 15)
+                            return new ItemOutcome("Using your clever distraction tactics, the marble rolls perfectly, helping you ascend.");
+                        return new ItemOutcome("The marble wobbles as you climb. A small slip bruises your paw.", true, FailureDamage / 2);
+                    }
+                )
+            }
+        ),
+        "RIGHT (Chandelier Leap)",
+        new ScenePath(
+            "Wind rushes in from an open window, swinging the chandelier wildly. Miss the timing and you'll be tossed into the sideboard.",
+            "Choose something to control the swing:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["thread"] = new ItemOutcome(
+                    Description: "Hook a thread to steady the chandelier.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You hook the thread expertly, stabilize the chandelier, and land safely.");
+                        return new ItemOutcome("You grab the thread, but swing wildly and bump yourself.", true, FailureDamage / 2);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    Description: "Use the marble to balance your leap.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Charisma >= 15)
+                            return new ItemOutcome("You roll the marble strategically; it steadies the chandelier, and you land perfectly.");
+                        return new ItemOutcome("The marble slides off! You tumble slightly.", true, FailureDamage / 2);
+                    }
+                )
+            }
+        )
+    );
 
-    private static Scene BuildPantrySentriesScene() =>
-        new(
-            "PANTRY SENTRIES",
-            """
-Two pantry guardians stand between you and the cheese cupboard.
-LEFT: A phalanx of flour-coated ants sniff the air for trespassers.
-RIGHT: A spice rack rattles as a pepper mill prepares to sneeze out a storm.
-""",
-            "LEFT (Ant Patrol)",
-            new ScenePath(
-                """
-The lead ant clicks its mandibles, demanding tribute.
-Without an offering they'll swarm your tail.
-""",
-                "Choose something to appease them:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["crumb"] = new ItemOutcome("""
-You toss a cheese crumb onto the floor.
-The ants salute you and march after the snack, leaving a clear path.
-"""),
-                    ["pepper"] = new ItemOutcome("""
-You wave the chili pepper like a torch.
-The spicy fumes make the ants sneeze and scatter, giving you time to slip past.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You offer {item.ShortName}, but the ants lob it back at your snout.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Pepper Mill Gust)",
-            new ScenePath(
-                """
-The mill cranks faster and faster, whipping up a sneeze-spice cyclone.
-You'll need to disrupt the blast or shield yourself.
-""",
-                "Choose something to counter the storm:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["pepper"] = new ItemOutcome("""
-You squeeze the chili pepper, launching seeds straight into the mill gears.
-They jam at once and the gust dies out with a sputter.
-"""),
-                    ["crumb"] = new ItemOutcome("""
-You crumble cheese into the airflow.
-The mill gets clogged with gooey goodness and grinds to a halt while you scoot by.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You brandish {item.ShortName}, but the pepper gale whiplashes it into you.",
-                    true,
-                    FailureDamage)));
+    private static Scene BuildPantrySentriesScene() => new(
+        "PANTRY SENTRIES",
+        """
+        You slip into the pantry. Shelves tower above, jars rattling ominously.
+        LEFT: Two stacked cans wobble like watchful guards.
+        RIGHT: A jar of pickles teeters near the edge.
+        """,
+        "LEFT (Cans)",
+        new ScenePath(
+            "The cans sway precariously. One wrong move and you'll be buried under the clang!",
+            "Choose an item:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    Description: "Launch a pebble to topple the cans safely.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You launch a pebble with precision. The cans topple harmlessly away from you.");
+                        return new ItemOutcome("The pebble misses! A can topples and knocks you slightly off balance.", true, FailureDamage / 2);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    Description: "Roll a marble to nudge the cans.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You roll the marble cleverly; it knocks the lower can into place, and you slip past safely.");
+                        return new ItemOutcome("The marble rolls unpredictably, brushing your paw. You dodge just in time.", true, FailureDamage / 2);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    Description: "Brace a shield against falling cans.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Strength >= 15)
+                            return new ItemOutcome("You brace the shield. The cans clang against it, but you remain safe.");
+                        return new ItemOutcome("The shield slips under the clang! You get slightly hit.", true, FailureDamage / 2);
+                    }
+                )
+            }
+        ),
+        "RIGHT (Pickle Jar)",
+        new ScenePath(
+            "The pickle jar tilts closer to the edge with each step you take.",
+            "Choose an item to secure it:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    Description: "Use the slingshot to nudge the jar safely.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You nudge the jar with perfect aim; it settles safely and you slip past.");
+                        return new ItemOutcome("The jar wobbles but doesn’t fall. You jump back quickly.", true, FailureDamage / 2);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    Description: "Roll a marble to stabilize the jar.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You roll the marble carefully to steady the jar. You pass unharmed.");
+                        return new ItemOutcome("The marble slips and jars rattle; you dodge just in time.", true, FailureDamage / 2);
+                    }
+                )
+            }
+        )
+    );
 
-    private static Scene BuildToySoldiersScene() =>
-        new(
-            "TOY SOLDIER GAUNTLET",
-            """
-The nursery hallway is patrolled by wind-up soldiers and a towering doll captain.
-LEFT: March straight through the soldier line.
-RIGHT: Slip behind the captain's command post.
-""",
-            "LEFT (Soldier Line)",
-            new ScenePath(
-                """
-Tin sabers flash as the soldiers stomp toward you.
-You'll need to parry or break their formation.
-""",
-                "Choose something to duel with:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["sword"] = new ItemOutcome("""
-You draw your toothpick sword and tap-tap parry the sabers.
-One fancy twirl later, the soldiers bow and let you pass.
-"""),
-                    ["button"] = new ItemOutcome("""
-You polish the lucky button and hold it high.
-Its gleam dazzles the tin troops, freezing them mid-step while you weave through.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You raise {item.ShortName}, but a tin boot punts it right back into your chest.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Command Post)",
-            new ScenePath(
-                """
-The doll captain holds the winding key to reactivate the patrol.
-If she turns it, you'll be surrounded.
-""",
-                "Choose something to distract her:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["button"] = new ItemOutcome("""
-You flick the lucky button like a coin across the floor.
-The captain follows the shiny arc, leaving the winding key unguarded so you zip past.
-"""),
-                    ["sword"] = new ItemOutcome("""
-You tap the captain's boot with the toothpick sword.
-She topples like a felled tree, harmlessly blocking the key.
-""")
-                },
-                item => new ItemOutcome(
-                    $"You try {item.ShortName}, but the doll captain bats it back like a paddle.",
-                    true,
-                    FailureDamage)));
+    private static Scene BuildToySoldiersScene() => new(
+        "TOY SOLDIER GAUNTLET",
+        """
+        You enter the playroom battlefield. Toy soldiers march menacingly in formation.
+        LEFT: Rows of soldiers wielding plastic swords.
+        RIGHT: Catapulted blocks and spinning tops litter the floor.
+        """,
+        "LEFT (Toy Soldiers)",
+        new ScenePath(
+            "The soldiers tighten their ranks, ready to swipe at you with tiny plastic swords.",
+            "Choose an item to face them:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    Description: "Fire a pebble to scatter the soldiers.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You fire accurately, scattering the soldiers without harm.");
+                        return new ItemOutcome("The shot goes awry! A sword taps your paw as you dodge.", true, FailureDamage / 2);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    Description: "Block attacks with your shield.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Strength >= 15)
+                            return new ItemOutcome("You hold the shield firm; the soldiers clatter harmlessly against it.");
+                        return new ItemOutcome("A soldier slips past your shield and grazes you!", true, FailureDamage / 2);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    Description: "Roll a marble to disrupt the soldiers.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You roll the marble strategically; it topples a row, giving you safe passage.");
+                        return new ItemOutcome("The marble rolls unpredictably. You leap aside to avoid it.", true, FailureDamage / 2);
+                    }
+                )
+            }
+        ),
+        "RIGHT (Blocks & Tops)",
+        new ScenePath(
+            "The floor is a chaotic mess. One false step and you'll be launched into a spinning top or toppled block.",
+            "Choose an item to navigate:",
+            new Dictionary<string, ItemOutcome>
+            {
+                ["slingshot"] = new ItemOutcome(
+                    Description: "Move a block with your slingshot to clear the path.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Intelligence >= 15)
+                            return new ItemOutcome("You knock a block into a safer spot and dash across without harm.");
+                        return new ItemOutcome("The block shifts under your paw! You tumble slightly.", true, FailureDamage / 2);
+                    }
+                ),
+                ["shield"] = new ItemOutcome(
+                    Description: "Use the shield to deflect hazards.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Agility >= 15)
+                            return new ItemOutcome("You roll and dodge behind the shield, avoiding spinning tops and blocks.");
+                        return new ItemOutcome("A spinning top hits your shield but nudges you sideways!", true, FailureDamage / 2);
+                    }
+                ),
+                ["marble"] = new ItemOutcome(
+                    Description: "Roll a marble to distract moving hazards.",
+                    DynamicOutcome: (character, item) =>
+                    {
+                        if (character.Stats.Charisma >= 15)
+                            return new ItemOutcome("You cleverly roll the marble to distract the toys and slip past safely.");
+                        return new ItemOutcome("The marble bounces wildly. You scramble to avoid the flying blocks.", true, FailureDamage / 2);
+                    }
+                )
+            }
+        )
+    );
 
     private static void PlayScene(Scene scene, CharacterProfile character)
     {
@@ -557,13 +661,17 @@ She topples like a felled tree, harmlessly blocking the key.
         var selectedItem = usableItems[itemChoice - 1];
 
         Console.WriteLine();
-        var outcome = path.ItemOutcomes[selectedItem.Key];
+        var outcome = path.ItemOutcomes[selectedItem.Key].Resolve(character, selectedItem);
         Console.WriteLine(outcome.Description);
         if (outcome.CausesDamage)
         {
             character.Stats.LoseHealth(outcome.DamageAmount);
             Console.WriteLine($"You lose {outcome.DamageAmount} health! Current health: {character.Stats.Health}");
         }
+
+
+        Console.WriteLine("\nPress ENTER to continue...");
+        Console.ReadLine();
     }
 
     private static int ReadMenuChoice(int optionCount)
@@ -644,7 +752,7 @@ She topples like a felled tree, harmlessly blocking the key.
         }
 
         private static ItemOutcome DefaultFailureOutcomeFactory(InventoryItem item) =>
-            new($"You fumble with {item.ShortName}, but it backfires and bumps you.", true, FailureDamage);
+            new($"Oh no! You fumble with {item.ShortName}. Not good!", true, FailureDamage);
     }
 
     private static void CelebrateCamembert(CharacterProfile character)
