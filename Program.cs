@@ -360,7 +360,7 @@ The suction tugs at you, but you hold on until the blender powers down.
                 item => new ItemOutcome(
                     $"You cling to {item.ShortName}, but the blender's wind pelts it back at you.",
                     true,
-                    FailureDamage));
+                    FailureDamage)));
 
     private static Scene BuildCurtainClimbScene() =>
         new(
@@ -413,7 +413,7 @@ The added weight evens out the sway, giving you a perfect landing.
                 item => new ItemOutcome(
                     $"You toss {item.ShortName}, but the chandelier bats it back at your nose.",
                     true,
-                    FailureDamage));
+                    FailureDamage)));
 
     private static Scene BuildPantrySentriesScene() =>
         new(
@@ -466,7 +466,7 @@ The mill gets clogged with gooey goodness and grinds to a halt while you scoot b
                 item => new ItemOutcome(
                     $"You brandish {item.ShortName}, but the pepper gale whiplashes it into you.",
                     true,
-                    FailureDamage));
+                    FailureDamage)));
 
     private static Scene BuildToySoldiersScene() =>
         new(
@@ -519,7 +519,7 @@ She topples like a felled tree, harmlessly blocking the key.
                 item => new ItemOutcome(
                     $"You try {item.ShortName}, but the doll captain bats it back like a paddle.",
                     true,
-                    FailureDamage));
+                    FailureDamage)));
 
     private static void PlayScene(Scene scene, CharacterProfile character)
     {
