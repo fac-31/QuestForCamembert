@@ -5,6 +5,8 @@ Class for Obstacle
 
 */
 
+using System.Text;
+using System.Threading;
 
 // Stats class to hold character attributes
 public class Stats
@@ -63,8 +65,41 @@ public class Tom : Character
 
 public static class Program
 {
+    private const int TypeDelayMilliseconds = 25;
+
     public static void Main(string[] args)
     {
-        Console.WriteLine("Welcome to Quest for Camembert!");
+        DisplayWelcomeMessage();
+    }
+
+    private static void DisplayWelcomeMessage()
+    {
+        Console.OutputEncoding = Encoding.UTF8;
+
+        var welcomeText = """
+==========================================
+🧀  WELCOME TO QUEST FOR CAMEMBERT!!  🧀
+==========================================
+
+You're a brave little mouse in a BIG house looking for Camembert!
+
+Race across the board,
+avoid the traps,
+and outsmart anyone trying to catch you.
+
+Press ENTER to scurry inside...
+""";
+
+        TypeOut(welcomeText, TypeDelayMilliseconds);
+        Console.ReadLine();
+    }
+
+    private static void TypeOut(string text, int delayMilliseconds)
+    {
+        foreach (var character in text)
+        {
+            Console.Write(character);
+            Thread.Sleep(delayMilliseconds);
+        }
     }
 }
