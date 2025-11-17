@@ -60,3 +60,11 @@ public class Tom : Character
         this.CharacterStats.Charisma += 20;
     }
 }
+
+public static class Program
+{
+    public static void Main(string[] args)
+    {
+        Console.WriteLine("Welcome to Quest for Camembert!");
+    }
+}
