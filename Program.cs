@@ -82,6 +82,7 @@ public static class Program
         new("button", "Lucky Button", "Lucky Button (mystic charm)"),
         new("marble", "Marble", "Marble (rolling getaway)")
     };
+    private static readonly IReadOnlyList<Scene> AdventureScenes = SceneLibrary.Scenes;
 
     public static void Main(string[] args)
     {
@@ -239,287 +240,290 @@ Press ENTER to scurry inside...
 
     private static void PlayScenes(CharacterProfile character)
     {
-        var scenes = new[]
-        {
-            BuildCatVsHooverScene(),
-            BuildWorksurfaceScene(),
-            BuildCurtainClimbScene(),
-            BuildPantrySentriesScene(),
-            BuildToySoldiersScene()
-        };
-
-        foreach (var scene in scenes)
+        foreach (var scene in AdventureScenes)
         {
             PlayScene(scene, character);
         }
     }
 
-    private static Scene BuildCatVsHooverScene() =>
-        new(
-            "CAT vs HOOVER",
-            """
+    private static class SceneLibrary
+    {
+        public static IReadOnlyList<Scene> Scenes { get; } = new[]
+        {
+            CreateCatVsHoover(),
+            CreateWorksurface(),
+            CreateCurtainClimb(),
+            CreatePantrySentries(),
+            CreateToySoldiers()
+        };
+
+        private static Scene CreateCatVsHoover() =>
+            new(
+                "CAT vs HOOVER",
+                """
 You enter the living room.
 To the LEFT: you hear the slow, hungry purr of the household cat…
 To the RIGHT: the hoover sits dormant, but the switch is twitching like it might turn on.
 """,
-            "LEFT (Cat)",
-            new ScenePath(
-                """
+                "LEFT (Cat)",
+                new ScenePath(
+                    """
 The CAT prowls toward you, eyes locked on your tail.
 You must act fast!
 """,
-                "Choose an item to use:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
+                    "Choose an item to use:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["slingshot"] = new ItemOutcome("""
 You fire a tiny breadcrumb from your slingshot!
 The cat flinches and gives you a window to escape.
 You scurry to safety!
 """),
-                    ["shield"] = new ItemOutcome("""
+                        ["shield"] = new ItemOutcome("""
 You hold the bottlecap shield between you and the cat's claws.
 It clangs off the shield and loses interest.
 You dart away while it licks its paw.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You brandish {item.ShortName}, but the cat swats it back into your whiskers. Ouch!",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Hoover)",
-            new ScenePath(
-                """
+                    },
+                    item => new ItemOutcome(
+                        $"You brandish {item.ShortName}, but the cat swats it back into your whiskers. Ouch!",
+                        true,
+                        FailureDamage)),
+                "RIGHT (Hoover)",
+                new ScenePath(
+                    """
 As you approach, the Hoover suddenly ROARS to life!
 Dust and hair swirl everywhere.
 """,
-                "Choose an item to use:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
+                    "Choose an item to use:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["slingshot"] = new ItemOutcome("""
 You launch a pebble at the power switch.
 The hoover sputters off and you zip past the hose.
 """),
-                    ["shield"] = new ItemOutcome("""
+                        ["shield"] = new ItemOutcome("""
 You crouch behind your bottlecap as debris flies.
 You survive the storm and crawl onward.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You wave {item.ShortName}, but the hoover gust blasts it into you.",
-                    true,
-                    FailureDamage)));
+                    },
+                    item => new ItemOutcome(
+                        $"You wave {item.ShortName}, but the hoover gust blasts it into you.",
+                        true,
+                        FailureDamage)));
 
-    private static Scene BuildWorksurfaceScene() =>
-        new(
-            "THE WORKSURFACE",
-            """
+        private static Scene CreateWorksurface() =>
+            new(
+                "THE WORKSURFACE",
+                """
 You climb onto the kitchen counter.
 LEFT: A row of shiny KNIVES. The handles look slippery.
 RIGHT: A BLENDER sits open… and someone’s hand just reached for the power button.
 """,
-            "LEFT (Knives)",
-            new ScenePath(
-                """
+                "LEFT (Knives)",
+                new ScenePath(
+                    """
 You slip onto the cutting board. One wrong move and—
 A knife starts tipping toward you!
 """,
-                "Choose an item:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
+                    "Choose an item:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["slingshot"] = new ItemOutcome("""
 You snap a rubber band at the falling knife.
 It nudges the blade aside just enough for you to scurry past the handle.
 """),
-                    ["shield"] = new ItemOutcome("""
+                        ["shield"] = new ItemOutcome("""
 You brace the bottlecap above you.
 The knife clangs on the metal and sticks in the board while you dive to safety.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You raise {item.ShortName}, but the knife hammers it back into your paws.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Blender)",
-            new ScenePath(
-                """
+                    },
+                    item => new ItemOutcome(
+                        $"You raise {item.ShortName}, but the knife hammers it back into your paws.",
+                        true,
+                        FailureDamage)),
+                "RIGHT (Blender)",
+                new ScenePath(
+                    """
 The blender whirs to life!
 The air vortex is pulling you toward it.
 """,
-                "Use an item to escape:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["slingshot"] = new ItemOutcome("""
+                    "Use an item to escape:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["slingshot"] = new ItemOutcome("""
 You aim at the power button and let fly.
 The button pops back out and the blades grind to a halt.
 """),
-                    ["shield"] = new ItemOutcome("""
+                        ["shield"] = new ItemOutcome("""
 You grip the countertop with one paw and anchor the shield behind a knob.
 The suction tugs at you, but you hold on until the blender powers down.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You cling to {item.ShortName}, but the blender's wind pelts it back at you.",
-                    true,
-                    FailureDamage)));
+                    },
+                    item => new ItemOutcome(
+                        $"You cling to {item.ShortName}, but the blender's wind pelts it back at you.",
+                        true,
+                        FailureDamage)));
 
-    private static Scene BuildCurtainClimbScene() =>
-        new(
-            "CURTAIN CLIMB",
-            """
+        private static Scene CreateCurtainClimb() =>
+            new(
+                "CURTAIN CLIMB",
+                """
 You slip into the dining room where enormous velvet curtains sway.
 LEFT: Climb the tasseled cord toward the curtain rod lookout.
 RIGHT: Dash along the window ledge and leap to the chandelier.
 """,
-            "LEFT (Curtain Cord)",
-            new ScenePath(
-                """
+                "LEFT (Curtain Cord)",
+                new ScenePath(
+                    """
 The cord is slick with polish and twice as thick as you are.
 If you fall, it's a long drop to the marble floor.
 """,
-                "Choose something to steady your climb:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["thread"] = new ItemOutcome("""
+                    "Choose something to steady your climb:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["thread"] = new ItemOutcome("""
 You loop your spool thread around the cord like a harness.
 Step by step you rappel upward until you reach the rod.
 """),
-                    ["marble"] = new ItemOutcome("""
+                        ["marble"] = new ItemOutcome("""
 You wedge the marble beneath you as a foothold, rolling it up with each tug.
 The improvised step keeps you glued to the cord, and you reach the top.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You cling to {item.ShortName}, but it slips and smacks you as you tumble a few inches.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Chandelier Leap)",
-            new ScenePath(
-                """
+                    },
+                    item => new ItemOutcome(
+                        $"You cling to {item.ShortName}, but it slips and smacks you as you tumble a few inches.",
+                        true,
+                        FailureDamage)),
+                "RIGHT (Chandelier Leap)",
+                new ScenePath(
+                    """
 Wind rushes in from an open window, swinging the chandelier wildly.
 Miss the timing and you'll be tossed into the sideboard.
 """,
-                "Choose something to control the swing:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["thread"] = new ItemOutcome("""
+                    "Choose something to control the swing:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["thread"] = new ItemOutcome("""
 You sling the thread like a lasso, snagging a chandelier arm.
 With a quick yank you stabilize the swing and land neatly on the fixture.
 """),
-                    ["marble"] = new ItemOutcome("""
+                        ["marble"] = new ItemOutcome("""
 You roll the marble down the ledge, letting it drop onto the chandelier chain.
 The added weight evens out the sway, giving you a perfect landing.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You toss {item.ShortName}, but the chandelier bats it back at your nose.",
-                    true,
-                    FailureDamage)));
+                    },
+                    item => new ItemOutcome(
+                        $"You toss {item.ShortName}, but the chandelier bats it back at your nose.",
+                        true,
+                        FailureDamage)));
 
-    private static Scene BuildPantrySentriesScene() =>
-        new(
-            "PANTRY SENTRIES",
-            """
+        private static Scene CreatePantrySentries() =>
+            new(
+                "PANTRY SENTRIES",
+                """
 Two pantry guardians stand between you and the cheese cupboard.
 LEFT: A phalanx of flour-coated ants sniff the air for trespassers.
 RIGHT: A spice rack rattles as a pepper mill prepares to sneeze out a storm.
 """,
-            "LEFT (Ant Patrol)",
-            new ScenePath(
-                """
+                "LEFT (Ant Patrol)",
+                new ScenePath(
+                    """
 The lead ant clicks its mandibles, demanding tribute.
 Without an offering they'll swarm your tail.
 """,
-                "Choose something to appease them:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["crumb"] = new ItemOutcome("""
+                    "Choose something to appease them:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["crumb"] = new ItemOutcome("""
 You toss a cheese crumb onto the floor.
 The ants salute you and march after the snack, leaving a clear path.
 """),
-                    ["pepper"] = new ItemOutcome("""
+                        ["pepper"] = new ItemOutcome("""
 You wave the chili pepper like a torch.
 The spicy fumes make the ants sneeze and scatter, giving you time to slip past.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You offer {item.ShortName}, but the ants lob it back at your snout.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Pepper Mill Gust)",
-            new ScenePath(
-                """
+                    },
+                    item => new ItemOutcome(
+                        $"You offer {item.ShortName}, but the ants lob it back at your snout.",
+                        true,
+                        FailureDamage)),
+                "RIGHT (Pepper Mill Gust)",
+                new ScenePath(
+                    """
 The mill cranks faster and faster, whipping up a sneeze-spice cyclone.
 You'll need to disrupt the blast or shield yourself.
 """,
-                "Choose something to counter the storm:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["pepper"] = new ItemOutcome("""
+                    "Choose something to counter the storm:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["pepper"] = new ItemOutcome("""
 You squeeze the chili pepper, launching seeds straight into the mill gears.
 They jam at once and the gust dies out with a sputter.
 """),
-                    ["crumb"] = new ItemOutcome("""
+                        ["crumb"] = new ItemOutcome("""
 You crumble cheese into the airflow.
 The mill gets clogged with gooey goodness and grinds to a halt while you scoot by.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You brandish {item.ShortName}, but the pepper gale whiplashes it into you.",
-                    true,
-                    FailureDamage)));
+                    },
+                    item => new ItemOutcome(
+                        $"You brandish {item.ShortName}, but the pepper gale whiplashes it into you.",
+                        true,
+                        FailureDamage)));
 
-    private static Scene BuildToySoldiersScene() =>
-        new(
-            "TOY SOLDIER GAUNTLET",
-            """
+        private static Scene CreateToySoldiers() =>
+            new(
+                "TOY SOLDIER GAUNTLET",
+                """
 The nursery hallway is patrolled by wind-up soldiers and a towering doll captain.
 LEFT: March straight through the soldier line.
 RIGHT: Slip behind the captain's command post.
 """,
-            "LEFT (Soldier Line)",
-            new ScenePath(
-                """
+                "LEFT (Soldier Line)",
+                new ScenePath(
+                    """
 Tin sabers flash as the soldiers stomp toward you.
 You'll need to parry or break their formation.
 """,
-                "Choose something to duel with:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["sword"] = new ItemOutcome("""
+                    "Choose something to duel with:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["sword"] = new ItemOutcome("""
 You draw your toothpick sword and tap-tap parry the sabers.
 One fancy twirl later, the soldiers bow and let you pass.
 """),
-                    ["button"] = new ItemOutcome("""
+                        ["button"] = new ItemOutcome("""
 You polish the lucky button and hold it high.
 Its gleam dazzles the tin troops, freezing them mid-step while you weave through.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You raise {item.ShortName}, but a tin boot punts it right back into your chest.",
-                    true,
-                    FailureDamage)),
-            "RIGHT (Command Post)",
-            new ScenePath(
-                """
+                    },
+                    item => new ItemOutcome(
+                        $"You raise {item.ShortName}, but a tin boot punts it right back into your chest.",
+                        true,
+                        FailureDamage)),
+                "RIGHT (Command Post)",
+                new ScenePath(
+                    """
 The doll captain holds the winding key to reactivate the patrol.
 If she turns it, you'll be surrounded.
 """,
-                "Choose something to distract her:",
-                new Dictionary<string, ItemOutcome>
-                {
-                    ["button"] = new ItemOutcome("""
+                    "Choose something to distract her:",
+                    new Dictionary<string, ItemOutcome>
+                    {
+                        ["button"] = new ItemOutcome("""
 You flick the lucky button like a coin across the floor.
 The captain follows the shiny arc, leaving the winding key unguarded so you zip past.
 """),
-                    ["sword"] = new ItemOutcome("""
+                        ["sword"] = new ItemOutcome("""
 You tap the captain's boot with the toothpick sword.
 She topples like a felled tree, harmlessly blocking the key.
 """)
-                },
-                item => new ItemOutcome(
-                    $"You try {item.ShortName}, but the doll captain bats it back like a paddle.",
-                    true,
-                    FailureDamage)));
+                    },
+                    item => new ItemOutcome(
+                        $"You try {item.ShortName}, but the doll captain bats it back like a paddle.",
+                        true,
+                        FailureDamage)));
+    }
 
     private static void PlayScene(Scene scene, CharacterProfile character)
     {
